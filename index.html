@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>iPhone Simulation</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #222;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .layout {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .devices-iphone-14-pro {
+      width: 320px;
+      height: 650px;
+      background: linear-gradient(to bottom, #111, #333);
+      background-image: url(Gamer.jpg);
+      background-size: cover;
+      border-radius: 40px;
+      padding: 20px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+    }
+
+    .screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding-top: 60px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    
+    .screen.active {
+      display: flex;
+    }
+    
+    .time {
+      font-size: 60px;
+      font-weight: bold;
+    }
+
+    .date {
+      font-size: 18px;
+      margin-top: 8px;
+    }
+
+    .swipe-text {
+      font-size: 16px;
+      color: #aaa;
+      animation: blink 1.5s infinite;
+      cursor: pointer;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .password-dot {
+      font-size: 32px;
+      text-align: center;
+      letter-spacing: 10px;
+      margin: 20px auto;
+      height: 40px;
+      color: #fff;
+    }
+
+    .key-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      width: 240px;
+      margin: 20px auto;
+      text-align: center;
+    }
+
+    .key {
+      background-color: transparent;
+      color: white;
+      padding: 20px;
+      font-size: 24px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .key:hover {
+      background-color: #666;
+    }
+
+    .error {
+      color: red;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      width: 200px;
+      text-align: center;
+    }
+
+    .app {
+      background-color: transparent;
+      border-radius: 15px;
+      padding: 20px;
+      font-size: 24px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      color: white;
+      cursor: pointer;
+    }
+
+    .island {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 30px;
+      background-color: #000;
+      border-radius: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <div class="devices-iphone-14-pro">
+      <div class="island"></div>
+
+      <!-- Lock Screen -->
+      <div class="lock-screen screen active" id="lockscreen">
+        <div class="time" id="time">12:45</div>
+        <div class="date" id="date">Tuesday, June 24</div>
+        <div class="swipe-text" id="swipeArea">Tap to unlock</div>
+      </div>
+
+      <!-- Password Screen -->
+      <div class="password-screen screen" id="passwordscreen">
+        <h2>Enter Password</h2>
+        <div class="password-dot" id="passwordDisplay"></div>
+        <div class="key-grid">
+          <div class="key" onclick="enterDigit('1')">1</div>
+          <div class="key" onclick="enterDigit('2')">2</div>
+          <div class="key" onclick="enterDigit('3')">3</div>
+          <div class="key" onclick="enterDigit('4')">4</div>
+          <div class="key" onclick="enterDigit('5')">5</div>
+          <div class="key" onclick="enterDigit('6')">6</div>
+          <div class="key" onclick="enterDigit('7')">7</div>
+          <div class="key" onclick="enterDigit('8')">8</div>
+          <div class="key" onclick="enterDigit('9')">9</div>
+          <div class="key" onclick="clearDigit()">←</div>
+          <div class="key" onclick="enterDigit('0')">0</div>
+          <div class="key" onclick="checkPassword()">✓</div>
+        </div>
+        <p id="error" class="error"></p>
+      </div>
+
+      <!-- Home Screen -->
+      <div class="home-screen screen" id="homescreen">
+        <div class="app-grid">
+          <div class="app">📞</div>
+          <div class="app">💬</div>
+          <div class="app">📷</div>
+          <div class="app">⚙</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Time & Date
+    function updateClock() {
+      const now = new Date();
+      const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const date = now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+
+      document.getElementById("time").textContent = time;
+      document.getElementById("date").textContent = date;
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Tap to Unlock
+    document.getElementById("swipeArea").addEventListener("click", () => {
+      showScreen("passwordscreen");
+    });
+
+    // Password Logic
+    let password = "";
+    const correctPassword = "123456";
+
+    function enterDigit(digit) {
+      if (password.length < 6) {
+        password += digit;
+        updateDisplay();
+      }
+    }
+
+    function clearDigit() {
+      password = password.slice(0, -1);
+      updateDisplay();
+    }
+
+    function updateDisplay() {
+      document.getElementById("passwordDisplay").textContent = ".".repeat(password.length);
+      document.getElementById("error").textContent = "";
+    }
+
+    function checkPassword() {
+      if (password === correctPassword) {
+        showScreen("homescreen");
+      } else {
+        document.getElementById("error").textContent = "Incorrect password";
+        password = "";
+        updateDisplay();
+      }
+    }
+
+    // Screen switcher
+    function showScreen(id) {
+      document.querySelectorAll(".screen").forEach(screen => {
+        screen.classList.remove("active");
+      });
+      document.getElementById(id).classList.add("active");
+    }
+  </script>
+</body>
+</html>
